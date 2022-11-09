@@ -1,0 +1,42 @@
+//create card
+POST http://localhost:3000/cards
+Accept: */*
+Cache-Control: no-cache
+Content-Type: application/json
+User-ID: 634acfe1f470f96c0c324948
+
+{
+    "name":"Тестовая карточка",
+    "link":"https://www.mirf.ru/wp-content/uploads/2015/09/maxresdefault16.jpg"
+}
+
+###
+//get cards
+GET http://localhost:3000/cards
+Accept: */*
+Cache-Control: no-cache
+Content-Type: application/json
+
+###
+//like
+PUT http://localhost:3000/cards/636c0cf40bc91c5ba267f18a/likes
+Accept: */*
+Cache-Control: no-cache
+Content-Type: application/json
+User-ID: 634acfe1f470f96c0c324948
+
+###
+//dislike
+DELETE http://localhost:3000/cards/636c0cf40bc91c5ba267f18a/likes
+Accept: */*
+Cache-Control: no-cache
+Content-Type: application/json
+User-ID: 634acfe1f470f96c0c324948
+
+###
+//delete card
+DELETE http://localhost:3000/cards/636c0cf40bc91c5ba267f18a
+Accept: */*
+Cache-Control: no-cache
+Content-Type: application/json
+User-ID: 634acfe1f470f96c0c324948

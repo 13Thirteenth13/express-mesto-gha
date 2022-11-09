@@ -1,0 +1,18 @@
+//create user
+POST http://localhost:3000/users
+Accept: */*
+Cache-Control: no-cache
+Content-Type: application/json
+
+{
+    "name":"Тестовый пользователь",
+    "about":"О себе",
+    "avatar":"https://www.mirf.ru/wp-content/uploads/2015/09/maxresdefault16.jpg"
+}
+
+###
+//get users
+GET http://localhost:3000/users
+Accept: */*
+Cache-Control: no-cache
+Content-Type: application/json
