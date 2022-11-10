@@ -7,8 +7,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint .",
-    "dev": "nodemon ./bin/index.js",
-    "start": "./bin/index.js"
+    "dev": "set NODE_ENV=development && nodemon ./bin/index.js",
+    "start": "set NODE_ENV=production && node ./bin/index.js"
   },
   "repository": {
     "type": "git",
