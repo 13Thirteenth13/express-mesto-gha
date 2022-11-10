@@ -18,13 +18,16 @@ const schema = new Schema({
     ref: 'User',
     required: true,
   },
-  likes: {
-    type: Array,
-    default: [],
-  },
+  likes: [
+    {
+      type: Schema.ObjectId,
+      ref: 'User',
+      default: [],
+    },
+  ],
   createdAt: {
     type: Date,
-    default: Date.now(),
+    default: Date.now,
   },
 }, { versionKey: false });
 

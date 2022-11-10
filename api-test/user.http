@@ -16,3 +16,10 @@ GET http://localhost:3000/users
 Accept: */*
 Cache-Control: no-cache
 Content-Type: application/json
+
+###
+//get user
+GET http://localhost:3000/users/636c02b95ab4033298a04fea
+Accept: */*
+Cache-Control: no-cache
+Content-Type: application/json

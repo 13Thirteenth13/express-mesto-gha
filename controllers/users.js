@@ -1,7 +1,7 @@
 import { constants } from 'http2';
 import { User } from '../models/users.js';
 
-const responseReadError = (res) => res.status(constants.HTTP_STATUS_NOT_FOUND).send({
+const responseGetError = (res) => res.status(constants.HTTP_STATUS_NOT_FOUND).send({
   message: 'Пользователь не найден',
 });
 
@@ -9,53 +9,79 @@ const responseUpdateError = (res, message) => res.status(constants.HTTP_STATUS_B
   message: `Некорректные данные для пользователя. ${message}`,
 });
 
-export const read = (req, res) => {
+const responseServerError = (res, message) => {
+  res.status(constants.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({
+    message: `Внутренняя ошибка сервера. ${message}`,
+  });
+};
+
+export const getUser = (req, res) => {
   const { id } = req.params;
-  const promise = id ? User.findById(id) : User.find({});
 
-  promise
+  User.findById(id)
     .then((user) => {
-      if (user) {
-        res.send(user);
-      } else {
-        responseReadError(res);
+      if (!user) {
+        return responseGetError(res);
       }
+      return res.send(user);
     })
     .catch((err) => {
-      console.error(err);
       if (err.name === 'CastError') {
-        responseUpdateError(res, err.message);
-      } else {
-        responseReadError(res);
+        return responseUpdateError(res, err.message);
       }
+      return responseServerError(res, err.message);
     });
 };
 
-export const create = (req, res) => {
+export const getUsers = (req, res) => {
+  User.find({})
+    .then((users) => res.send(users))
+    .catch((err) => responseServerError(res, err.message));
+};
+
+export const createUser = (req, res) => {
   User.create(req.body)
-    .then((user) => {
-      res.send(user);
-    })
+    .then((user) => res.send(user))
     .catch((err) => {
-      console.error(err);
-      responseUpdateError(res, err.message);
+      if (err.name === 'ValidationError') {
+        return responseUpdateError(res, err.message);
+      }
+      return responseServerError(res, err.message);
     });
 };
 
-export const update = (req, res) => {
-  const user = req.body;
-  const { _id } = req.user;
+export const updateProfile = (req, res) => {
+  const { name, about } = req.body;
 
-  User.findByIdAndUpdate(_id, user, { new: true })
-    .then((updatedUser) => {
-      if (updatedUser) {
-        res.send(updatedUser);
-      } else {
-        responseReadError(res);
-      }
-    })
+  User.findByIdAndUpdate(req.user._id, { name, about }, { runValidators: true })
+    .then((user) => res.send({
+      _id: user._id,
+      avatar: user.avatar,
+      name,
+      about,
+    }))
     .catch((err) => {
-      console.error(err);
-      responseUpdateError(res, err.message);
+      if (err.name === 'ValidationError') {
+        return responseUpdateError(res, err.message);
+      }
+      return responseServerError(res, err.message);
+    });
+};
+
+export const updateAvatar = (req, res) => {
+  const { avatar } = req.body;
+
+  User.findByIdAndUpdate(req.user._id, { avatar }, { runValidators: true })
+    .then((user) => res.send({
+      _id: user._id,
+      avatar,
+      name: user.name,
+      about: user.about,
+    }))
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        return responseUpdateError(res, err.message);
+      }
+      return responseServerError(res, err.message);
     });
 };

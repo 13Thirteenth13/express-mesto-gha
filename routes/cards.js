@@ -1,15 +1,15 @@
 import { Router } from 'express';
 import {
-  read, create, update, remove,
+  getCards, createCard, updateCard, deleteCard,
 } from '../controllers/cards.js';
 
 export const router = Router();
 
-router.get('/', read);
-router.post('/', create);
+router.get('/', getCards);
+router.post('/', createCard);
 router.put('/:id/likes', (req, ...other) => {
   req.params.isLike = true;
-  update(req, ...other);
+  updateCard(req, ...other);
 });
-router.delete('/:id/likes', update);
-router.delete('/:id', remove);
+router.delete('/:id/likes', updateCard);
+router.delete('/:id', deleteCard);
