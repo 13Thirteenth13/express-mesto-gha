@@ -7,7 +7,9 @@ Content-Type: application/json
 {
     "name":"Тестовый пользователь",
     "about":"О себе",
-    "avatar":"https://www.mirf.ru/wp-content/uploads/2015/09/maxresdefault16.jpg"
+    "avatar":"https://www.mirf.ru/wp-content/uploads/2015/09/maxresdefault16.jpg",
+    "email":"user@test.com",
+    "password":"qwerty"
 }
 
 ###
@@ -19,7 +21,7 @@ Content-Type: application/json
 
 ###
 //get user
-GET http://localhost:3000/users/636c02b95ab4033298a04fea
+GET http://localhost:3000/users/637bd850469b909137c2f8b3
 Accept: */*
 Cache-Control: no-cache
 Content-Type: application/json

@@ -1,3 +1,5 @@
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
 import { constants } from 'http2';
 import { User } from '../models/users.js';
 
@@ -40,7 +42,11 @@ export const getUsers = (req, res) => {
 };
 
 export const createUser = (req, res) => {
-  User.create(req.body)
+  const { name, about, avatar, email, password } = req.body;
+
+  bcrypt
+    .hash(password, 10)
+    .then((hash) => User.create({ name, about, avatar, email, password: hash }))
     .then((user) => res.send(user))
     .catch((err) => {
       if (err.name === 'ValidationError') {
@@ -83,5 +89,29 @@ export const updateAvatar = (req, res) => {
         return responseUpdateError(res, err.message);
       }
       return responseServerError(res, err.message);
+    });
+};
+
+export const login = (req, res) => {
+  const { email, password } = req.body;
+
+  return User.findUserByCredentials(email, password)
+    .then((user) => {
+      const { NODE_ENV, JWT_SECRET } = req.app.get('config');
+      const token = jwt.sign(
+        { _id: user._id },
+        NODE_ENV === 'production' ? JWT_SECRET : 'dev-secret',
+        { expiresIn: '7d' },
+      );
+      res
+        .cookie('jwt', token, {
+          maxAge: 3600000,
+          httpOnly: true,
+        })
+        .end();
+      res.send({ token });
+    })
+    .catch((err) => {
+      res.status(constants.HTTP_STATUS_UNAUTHORIZED).send({ message: err.message });
     });
 };

@@ -25,7 +25,7 @@ export const run = async (envName) => {
   app.use(bodyParser.json());
   app.use((req, res, next) => {
     req.user = {
-      _id: '636c02b95ab4033298a04fea',
+      _id: '637bd850469b909137c2f8b3',
     };
 
     if (req.headers['User-ID'] || req.headers['user-id']) {
