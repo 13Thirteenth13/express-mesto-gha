@@ -61,21 +61,30 @@ export const updateCard = (req, res) => {
 };
 
 export const deleteCard = (req, res) => {
-  const { id } = req.params;
+  const removeCard = () => {
+    Card.findByIdAndRemove(req.params.cardId)
+      .then((card) => res.send(card))
+      .catch((err) => {
+        if (err.name === 'CastError') {
+          return responseUpdateError(res, err.message);
+        }
+        return responseServerError(res, err.message);
+      });
+  };
 
-  Card.findByIdAndDelete(id)
+  Card.findById(req.params.cardId)
     .then((card) => {
-      if (card) {
-        res.send(card);
-      } else {
-        responseGetError(res);
+      if (!card) {
+        return res.status(404).send({
+          message: 'Карточки не существует',
+        });
       }
+      if (req.user._id === card.owner.toString()) {
+        return removeCard();
+      }
+      return res
+        .status(constants.HTTP_STATUS_FORBIDDEN)
+        .send({ message: 'Попытка удалить чужую карточку' });
     })
-    .catch((err) => {
-      if (err.name === 'CastError') {
-        responseUpdateError(res, err.message);
-      } else {
-        responseServerError(res, err.message);
-      }
-    });
+    .catch((err) => responseServerError(res, err.message));
 };

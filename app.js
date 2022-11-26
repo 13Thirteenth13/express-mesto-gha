@@ -3,10 +3,14 @@ import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import express from 'express';
 import bodyParser from 'body-parser';
+import cookieParser from 'cookie-parser';
 import { constants } from 'http2';
 
 import { router as userRouter } from './routes/users.js';
 import { router as cardRouter } from './routes/cards.js';
+
+import { createUser, login } from './controllers/users.js';
+import { auth } from './middlewares/auth.js';
 
 export const run = async (envName) => {
   process.on('unhandledRejection', (err) => {
@@ -22,18 +26,14 @@ export const run = async (envName) => {
 
   const app = express();
 
+  app.set('config', config);
+  app.use(cookieParser());
   app.use(bodyParser.json());
-  app.use((req, res, next) => {
-    req.user = {
-      _id: '637bd850469b909137c2f8b3',
-    };
+  app.post('/signup', createUser);
+  app.post('/signin', login);
 
-    if (req.headers['User-ID'] || req.headers['user-id']) {
-      req.user._id = req.headers['User-ID'] || req.headers['user-id'];
-    }
+  app.use(auth);
 
-    next();
-  });
   app.use('/users', userRouter);
   app.use('/cards', cardRouter);
   app.all('/*', (req, res) => {
@@ -41,7 +41,11 @@ export const run = async (envName) => {
   });
 
   mongoose.set('runValidators', true);
-  await mongoose.connect('mongodb://localhost:27017/mestodb');
+  await mongoose.connect('mongodb://localhost:27017/mestodb', {
+    useUnifiedTopology: true,
+    useNewUrlParser: true,
+    autoIndex: true,
+  });
   const server = app.listen(config.PORT, config.HOST, () => {
     console.log(`Server run on http://localhost:${config.PORT}`);
   });

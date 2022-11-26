@@ -28,11 +28,26 @@ export const getUser = (req, res) => {
       return res.send(user);
     })
     .catch((err) => {
-      if (err.name === 'CastError') {
-        return responseUpdateError(res, err.message);
+      if (err.code === 11000) {
+        return res.status(constants.HTTP_STATUS_CONFLICT).send({
+          message:
+            'Пользователь c введенным email уже существует',
+        });
       }
-      return responseServerError(res, err.message);
+      if (err.name === 'ValidationError') {
+        return res.status(constants.HTTP_STATUS_BAD_REQUEST).send({
+          message: `Переданы некорректные данные в метод создания пользователя - ${err.message}`,
+        });
+      }
+      return res.status(500).send({ message: err.message });
     });
+};
+
+export const getMe = (req, res) => {
+  const { _id } = req.user;
+  User.find({ _id })
+    .then((user) => res.send(user))
+    .catch((err) => responseServerError(res, err.message));
 };
 
 export const getUsers = (req, res) => {
@@ -44,9 +59,13 @@ export const getUsers = (req, res) => {
 export const createUser = (req, res) => {
   const { name, about, avatar, email, password } = req.body;
 
+  const create = (hash) => {
+    User.create({ name, about, avatar, email, password: hash });
+  };
+
   bcrypt
     .hash(password, 10)
-    .then((hash) => User.create({ name, about, avatar, email, password: hash }))
+    .then((hash) => create(hash))
     .then((user) => res.send(user))
     .catch((err) => {
       if (err.name === 'ValidationError') {
@@ -97,18 +116,15 @@ export const login = (req, res) => {
 
   return User.findUserByCredentials(email, password)
     .then((user) => {
-      const { NODE_ENV, JWT_SECRET } = req.app.get('config');
-      const token = jwt.sign(
-        { _id: user._id },
-        NODE_ENV === 'production' ? JWT_SECRET : 'dev-secret',
-        { expiresIn: '7d' },
-      );
-      res
-        .cookie('jwt', token, {
-          maxAge: 3600000,
-          httpOnly: true,
-        })
-        .end();
+      const { JWT_SECRET } = req.app.get('config');
+      const token = jwt.sign({ _id: user._id }, JWT_SECRET, {
+        expiresIn: '7d',
+      });
+      res.cookie('jwt', token, {
+        maxAge: 3600000,
+        httpOnly: true,
+        sameSite: true,
+      });
       res.send({ token });
     })
     .catch((err) => {
