@@ -25,3 +25,61 @@ GET http://localhost:3000/users/637bd850469b909137c2f8b3
 Accept: */*
 Cache-Control: no-cache
 Content-Type: application/json
+
+###
+
+GET http://localhost:3000/users/me
+Accept: */*
+Cache-Control: no-cache
+Content-Type: application/json
+Authorization: {{token}}
+
+###
+
+PATCH http://localhost:3000/users/me
+Accept: */*
+Cache-Control: no-cache
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+    "name":"123",
+    "about":"321"
+}
+
+###
+
+PATCH http://localhost:3000/users/me
+Accept: */*
+Cache-Control: no-cache
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+    "name":"Тестовый пользователь",
+    "about":"О себе"
+}
+
+###
+
+PATCH http://localhost:3000/users/me/avatar
+Accept: */*
+Cache-Control: no-cache
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+    "avatar":"https://i.pinimg.com/originals/fe/aa/fb/feaafb5d8c5039eee20a229c0deb3d00.jpg"
+}
+
+###
+
+PATCH http://localhost:3000/users/me/avatar
+Accept: */*
+Cache-Control: no-cache
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+    "avatar":"https://www.mirf.ru/wp-content/uploads/2015/09/maxresdefault16.jpg"
+}

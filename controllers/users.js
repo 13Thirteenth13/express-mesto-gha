@@ -1,99 +1,138 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
-import { constants } from 'http2';
 import { User } from '../models/users.js';
 
-const responseGetError = (res) => res.status(constants.HTTP_STATUS_NOT_FOUND).send({
-  message: 'Пользователь не найден',
-});
+import {
+  HTTPError,
+  BadRequestError,
+  ConflictError,
+  NotFoundError,
+  ServerError,
+} from '../errors/index.js';
 
-const responseUpdateError = (res, message) => res.status(constants.HTTP_STATUS_BAD_REQUEST).send({
-  message: `Некорректные данные для пользователя. ${message}`,
-});
+const errorServer = (message) => new ServerError(message);
+const notFoundError = new NotFoundError('Пользователь не найден');
+const errorNotUnique = new ConflictError('Пользователь с такой почтой уже существует');
+const errorBadRequest = (message) => new BadRequestError(`Некорректные данные для пользователя. ${message}`);
 
-const responseServerError = (res, message) => {
-  res.status(constants.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({
-    message: `Внутренняя ошибка сервера. ${message}`,
-  });
-};
-
-export const getUser = (req, res) => {
-  const { id } = req.params;
-
-  User.findById(id)
+export const getUser = (req, res, next) => {
+  User.findById(req.params.userId)
     .then((user) => {
-      if (!user) {
-        return responseGetError(res);
+      if (user) {
+        res.send(user);
+      } else {
+        throw notFoundError;
       }
-      return res.send(user);
     })
     .catch((err) => {
-      if (err.code === 11000) {
-        return res.status(constants.HTTP_STATUS_CONFLICT).send({
-          message:
-            'Пользователь c введенным email уже существует',
-        });
+      if (err instanceof HTTPError) {
+        next(err);
+      } else if (err.name === 'CastError') {
+        next(errorBadRequest(err.message));
+      } else {
+        next(errorServer(err.message));
       }
-      if (err.name === 'ValidationError') {
-        return res.status(constants.HTTP_STATUS_BAD_REQUEST).send({
-          message: `Переданы некорректные данные в метод создания пользователя - ${err.message}`,
-        });
-      }
-      return res.status(500).send({ message: err.message });
     });
 };
 
-export const getMe = (req, res) => {
+export const getMe = (req, res, next) => {
   const { _id } = req.user;
   User.find({ _id })
-    .then((user) => res.send(user))
-    .catch((err) => responseServerError(res, err.message));
+    .then((user) => {
+      if (user) {
+        res.send(user);
+      } else {
+        throw notFoundError;
+      }
+    })
+    .catch((err) => {
+      if (err instanceof HTTPError) {
+        next(err);
+      } else if (err.name === 'CastError') {
+        next(errorBadRequest(err.message));
+      } else {
+        next(errorServer(err.message));
+      }
+    });
 };
 
-export const getUsers = (req, res) => {
+export const getUsers = (req, res, next) => {
   User.find({})
     .then((users) => res.send(users))
-    .catch((err) => responseServerError(res, err.message));
+    .catch((err) => {
+      if (err instanceof HTTPError) {
+        next(err);
+      } else {
+        next(errorServer(err.message));
+      }
+    });
 };
 
-export const createUser = (req, res) => {
-  const { name, about, avatar, email, password } = req.body;
+export const createUser = (req, res, next) => {
+  const {
+    name,
+    about,
+    avatar,
+    email,
+    password,
+  } = req.body;
 
-  const create = (hash) => {
-    User.create({ name, about, avatar, email, password: hash });
-  };
+  const createUserHash = (hash) => User.create({
+    name,
+    about,
+    avatar,
+    email,
+    password: hash,
+  });
 
   bcrypt
     .hash(password, 10)
-    .then((hash) => create(hash))
-    .then((user) => res.send(user))
+    .then((hash) => createUserHash(hash))
+    .then((user) => {
+      const { _id } = user;
+      res.send({
+        _id,
+        name,
+        about,
+        avatar,
+        email,
+      });
+    })
     .catch((err) => {
-      if (err.name === 'ValidationError') {
-        return responseUpdateError(res, err.message);
+      if (err instanceof HTTPError) {
+        next(err);
+      } else if (err.code === 11000) {
+        next(errorNotUnique);
+      } else if (err.name === 'ValidationError' || err.name === 'CastError') {
+        next(errorBadRequest(err.message));
+      } else {
+        next(errorServer(err.message));
       }
-      return responseServerError(res, err.message);
     });
 };
 
-export const updateProfile = (req, res) => {
+export const updateProfile = (req, res, next) => {
   const { name, about } = req.body;
 
   User.findByIdAndUpdate(req.user._id, { name, about }, { runValidators: true })
     .then((user) => res.send({
-      _id: user._id,
+      _id: [user._id],
       avatar: user.avatar,
       name,
       about,
     }))
     .catch((err) => {
-      if (err.name === 'ValidationError') {
-        return responseUpdateError(res, err.message);
+      if (err instanceof HTTPError) {
+        next(err);
+      } else if (err.name === 'ValidationError' || err.name === 'CastError') {
+        next(errorBadRequest(err.message));
+      } else {
+        next(errorServer(err.message));
       }
-      return responseServerError(res, err.message);
     });
 };
 
-export const updateAvatar = (req, res) => {
+export const updateAvatar = (req, res, next) => {
   const { avatar } = req.body;
 
   User.findByIdAndUpdate(req.user._id, { avatar }, { runValidators: true })
@@ -104,17 +143,19 @@ export const updateAvatar = (req, res) => {
       about: user.about,
     }))
     .catch((err) => {
-      if (err.name === 'ValidationError') {
-        return responseUpdateError(res, err.message);
+      if (err instanceof HTTPError) {
+        next(err);
+      } else if (err.name === 'ValidationError' || err.name === 'CastError') {
+        next(errorBadRequest(err.message));
+      } else {
+        next(errorServer(err.message));
       }
-      return responseServerError(res, err.message);
     });
 };
 
-export const login = (req, res) => {
+export const login = (req, res, next) => {
   const { email, password } = req.body;
-
-  return User.findUserByCredentials(email, password)
+  User.findUserByCredentials(email, password)
     .then((user) => {
       const { JWT_SECRET } = req.app.get('config');
       const token = jwt.sign({ _id: user._id }, JWT_SECRET, {
@@ -128,6 +169,14 @@ export const login = (req, res) => {
       res.send({ token });
     })
     .catch((err) => {
-      res.status(constants.HTTP_STATUS_UNAUTHORIZED).send({ message: err.message });
+      if (err instanceof HTTPError) {
+        next(err);
+      } else if (err.code === 11000) {
+        next(errorNotUnique);
+      } else if (err.name === 'ValidationError' || err.name === 'CastError') {
+        next(errorBadRequest(err.message));
+      } else {
+        next(errorServer(err.message));
+      }
     });
 };

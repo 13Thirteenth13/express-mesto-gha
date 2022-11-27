@@ -35,7 +35,7 @@ User-ID: 634acfe1f470f96c0c324948
 
 ###
 //delete card
-DELETE http://localhost:3000/cards/636c0cf40bc91c5ba267f18a
+DELETE http://localhost:3000/cards/63838af11c8a029f2f63aab7
 Accept: */*
 Cache-Control: no-cache
 Content-Type: application/json

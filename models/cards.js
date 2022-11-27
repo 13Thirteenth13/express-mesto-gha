@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { urlRegex } from '../utils/regex.js';
 
 const { Schema } = mongoose;
 
@@ -12,6 +13,10 @@ const schema = new Schema({
   link: {
     type: String,
     required: true,
+    validate: {
+      validator: (value) => urlRegex.test(value),
+      message: () => 'Некорректный формат ссылки',
+    },
   },
   owner: {
     type: Schema.ObjectId,
