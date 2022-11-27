@@ -1,22 +1,19 @@
 import jwt from 'jsonwebtoken';
 import { UnauthorizedError } from '../errors/index.js';
 
-const handleAuthError = (next) => {
-  next(new UnauthorizedError('Необходима авторизация'));
-};
-
-export const auth = async (req, res, next) => {
-  const { JWT_SECRET } = req.app.get('config');
-  const cookieAuth = req.cookies.jwt;
-  if (!cookieAuth) {
-    return handleAuthError(next);
+export const auth = (req, res, next) => {
+  const { authorization = '' } = req.headers;
+  if (!authorization) {
+    next(new UnauthorizedError('Необходима авторизация'));
+  } else {
+    const token = req.cookies.jwt || authorization.replace(/^Bearer*\s*/i, '');
+    const { JWT_SECRET } = req.app.get('config');
+    try {
+      const payload = jwt.verify(token, JWT_SECRET);
+      req.user = payload;
+      next();
+    } catch (err) {
+      next(new UnauthorizedError('Необходима авторизация'));
+    }
   }
-  let payload;
-  try {
-    payload = jwt.verify(cookieAuth, JWT_SECRET);
-  } catch (err) {
-    return handleAuthError(next);
-  }
-  req.user = payload;
-  return next();
 };
