@@ -7,10 +7,10 @@ import {
   ForbiddenError,
 } from '../errors/index.js';
 
-const errorServer = (message) => new ServerError(message);
+const errorServer = new ServerError('Произошла ошибка на сервере');
 const notFoundError = new NotFoundError('Карточка не найдена');
 const forbiddenError = new ForbiddenError('Это действие можно выполнить только со своими карточками');
-const errorBadRequest = (message) => new BadRequestError(`Некорректные данные для карточки. ${message}`);
+const errorBadRequest = new BadRequestError('Некорректные данные для карточки');
 
 export const getCards = (req, res, next) => {
   Card.find({})
@@ -19,7 +19,7 @@ export const getCards = (req, res, next) => {
       if (err instanceof HTTPError) {
         next(err);
       } else {
-        next(errorServer(err.message));
+        next(errorServer);
       }
     });
 };
@@ -33,9 +33,9 @@ export const createCard = (req, res, next) => {
       if (err instanceof HTTPError) {
         next(err);
       } else if (err.name === 'ValidationError' || err.name === 'CastError') {
-        next(errorBadRequest(err.message));
+        next(errorBadRequest);
       } else {
-        next(errorServer(err.message));
+        next(errorServer);
       }
     });
 };
@@ -58,9 +58,9 @@ export const deleteCard = (req, res, next) => {
       if (err instanceof HTTPError) {
         next(err);
       } else if (err.name === 'CastError') {
-        next(errorBadRequest(err.message));
+        next(errorBadRequest);
       } else {
-        next(notFoundError);
+        next(errorServer);
       }
     });
 };
@@ -82,9 +82,9 @@ export const likeCard = (req, res, next) => {
       if (err instanceof HTTPError) {
         next(err);
       } else if (err.name === 'ValidationError' || err.name === 'CastError') {
-        next(errorBadRequest(err.message));
+        next(errorBadRequest);
       } else {
-        next(errorServer(err.message));
+        next(errorServer);
       }
     });
 };
@@ -106,9 +106,9 @@ export const dislikeCard = (req, res, next) => {
       if (err instanceof HTTPError) {
         next(err);
       } else if (err.name === 'ValidationError' || err.name === 'CastError') {
-        next(errorBadRequest(err.message));
+        next(errorBadRequest);
       } else {
-        next(errorServer(err.message));
+        next(errorServer);
       }
     });
 };

@@ -10,10 +10,10 @@ import {
   ServerError,
 } from '../errors/index.js';
 
-const errorServer = (message) => new ServerError(message);
+const errorServer = new ServerError('Произошла ошибка на сервере');
 const notFoundError = new NotFoundError('Пользователь не найден');
 const errorNotUnique = new ConflictError('Пользователь с такой почтой уже существует');
-const errorBadRequest = (message) => new BadRequestError(`Некорректные данные для пользователя. ${message}`);
+const errorBadRequest = new BadRequestError('Некорректные данные для пользователя');
 
 export const getUser = (req, res, next) => {
   User.findById(req.params.userId)
@@ -28,9 +28,9 @@ export const getUser = (req, res, next) => {
       if (err instanceof HTTPError) {
         next(err);
       } else if (err.name === 'CastError') {
-        next(errorBadRequest(err.message));
+        next(errorBadRequest);
       } else {
-        next(errorServer(err.message));
+        next(errorServer);
       }
     });
 };
@@ -49,9 +49,9 @@ export const getMe = (req, res, next) => {
       if (err instanceof HTTPError) {
         next(err);
       } else if (err.name === 'CastError') {
-        next(errorBadRequest(err.message));
+        next(errorBadRequest);
       } else {
-        next(errorServer(err.message));
+        next(errorServer);
       }
     });
 };
@@ -63,7 +63,7 @@ export const getUsers = (req, res, next) => {
       if (err instanceof HTTPError) {
         next(err);
       } else {
-        next(errorServer(err.message));
+        next(errorServer);
       }
     });
 };
@@ -104,9 +104,9 @@ export const createUser = (req, res, next) => {
       } else if (err.code === 11000) {
         next(errorNotUnique);
       } else if (err.name === 'ValidationError' || err.name === 'CastError') {
-        next(errorBadRequest(err.message));
+        next(errorBadRequest);
       } else {
-        next(errorServer(err.message));
+        next(errorServer);
       }
     });
 };
@@ -125,9 +125,9 @@ export const updateProfile = (req, res, next) => {
       if (err instanceof HTTPError) {
         next(err);
       } else if (err.name === 'ValidationError' || err.name === 'CastError') {
-        next(errorBadRequest(err.message));
+        next(errorBadRequest);
       } else {
-        next(errorServer(err.message));
+        next(errorServer);
       }
     });
 };
@@ -146,9 +146,9 @@ export const updateAvatar = (req, res, next) => {
       if (err instanceof HTTPError) {
         next(err);
       } else if (err.name === 'ValidationError' || err.name === 'CastError') {
-        next(errorBadRequest(err.message));
+        next(errorBadRequest);
       } else {
-        next(errorServer(err.message));
+        next(errorServer);
       }
     });
 };
@@ -171,12 +171,8 @@ export const login = (req, res, next) => {
     .catch((err) => {
       if (err instanceof HTTPError) {
         next(err);
-      } else if (err.code === 11000) {
-        next(errorNotUnique);
-      } else if (err.name === 'ValidationError' || err.name === 'CastError') {
-        next(errorBadRequest(err.message));
       } else {
-        next(errorServer(err.message));
+        next(errorServer);
       }
     });
 };

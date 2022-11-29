@@ -43,13 +43,12 @@ export const run = async (envName) => {
   app.use('/users', userRouter);
   app.use('/cards', cardRouter);
   app.use(errors());
-  app.all('/*', (req, res) => {
-    res.status(constants.HTTP_STATUS_NOT_FOUND).send({ message: 'Запрашиваемая страница не найдена' });
+  app.all('/*', (req, res, next) => {
+    next(res.status(constants.HTTP_STATUS_NOT_FOUND).send({ message: 'Запрашиваемая страница не найдена' }));
   });
   app.use((err, req, res, next) => {
     const isHttpError = err instanceof HTTPError;
     const isValidatorError = isCelebrateError(err);
-    const isModelError = (err.name === 'ValidationError') || (err.name === 'CastError');
 
     req.log.debug(err);
     if (isHttpError) {
@@ -57,14 +56,9 @@ export const run = async (envName) => {
         message: err.message,
       });
     }
-    if (isModelError) {
-      res.status(constants.HTTP_STATUS_BAD_REQUEST).send({
-        message: `Переданы некоректные данные. ${err.message}`,
-      });
-    }
-    if (!(isHttpError || isModelError || isValidatorError)) {
-      res.status(constants.HTTP_STATUS_SERVICE_UNAVAILABLE).send({
-        message: err.message || 'Неизвестная ошибка',
+    if (!(isHttpError || isValidatorError)) {
+      res.status(constants.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({
+        message: err.message || 'Произошла ошибка на сервере',
       });
     }
     next();
