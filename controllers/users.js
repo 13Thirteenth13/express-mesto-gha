@@ -40,7 +40,7 @@ export const getMe = (req, res, next) => {
   User.find({ _id })
     .then((user) => {
       if (user) {
-        res.send(user);
+        res.send(...user);
       } else {
         throw notFoundError;
       }
