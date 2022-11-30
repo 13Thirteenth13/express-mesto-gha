@@ -12,7 +12,7 @@ import { router as userRouter } from './routes/users.js';
 import { router as cardRouter } from './routes/cards.js';
 import { router as authRouter } from './routes/auth.js';
 
-import { HTTPError } from './errors/index.js';
+import { HTTPError, NotFoundError } from './errors/index.js';
 import { auth } from './middlewares/auth.js';
 
 export const run = async (envName) => {
@@ -44,7 +44,7 @@ export const run = async (envName) => {
   app.use('/cards', cardRouter);
   app.use(errors());
   app.all('/*', (req, res, next) => {
-    next(res.status(constants.HTTP_STATUS_NOT_FOUND).send({ message: 'Запрашиваемая страница не найдена' }));
+    next(new NotFoundError('Запрашиваемая страница не найдена'));
   });
   app.use((err, req, res, next) => {
     const isHttpError = err instanceof HTTPError;
